@@ -5,20 +5,47 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 
 class LauncherActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = buildBrowserIntent("https://crowdworks.jp/")
-        startActivity(intent)
+
+        requestCreatingShortcut()
+        launchBrowser("https://crowdworks.jp/")
         finish()
     }
 
     override fun finish() {
         super.finish()
         overridePendingTransition(0, 0)
+    }
+
+    private fun requestCreatingShortcut() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Toast.makeText(this, "Android 8.0以降はまだ対応してない", Toast.LENGTH_SHORT).show()
+        } else {
+            val appIntent = Intent(this, this::class.java).apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val icon = Intent.ShortcutIconResource.fromContext(this, R.mipmap.ic_launcher);
+            val shortcutIntent = Intent("com.android.launcher.action.INSTALL_SHORTCUT").apply {
+                putExtra(Intent.EXTRA_SHORTCUT_INTENT, appIntent)
+                putExtra(Intent.EXTRA_SHORTCUT_NAME, getString(R.string.app_name))
+                putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon)
+                putExtra("duplicate", false)
+            }
+            sendBroadcast(shortcutIntent)
+        }
+    }
+
+    private fun launchBrowser(url: String) {
+        val intent = buildBrowserIntent(url)
+        startActivity(intent)
     }
 
     private fun buildBrowserIntent(url: String): Intent {
