@@ -4,10 +4,12 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 
 class LauncherActivity : Activity() {
 
@@ -25,13 +27,20 @@ class LauncherActivity : Activity() {
     }
 
     private fun requestCreatingShortcut() {
+        val appIntent = Intent(this, this::class.java).apply {
+            action = Intent.ACTION_MAIN
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Toast.makeText(this, "Android 8.0以降はまだ対応してない", Toast.LENGTH_SHORT).show()
+            val manager = getSystemService(ShortcutManager::class.java)
+            val info = ShortcutInfo.Builder(this, "browser_launcher")
+                .setShortLabel(getString(R.string.app_name))
+                .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+                .setIntent(appIntent)
+                .build()
+            manager.requestPinShortcut(info, null)
         } else {
-            val appIntent = Intent(this, this::class.java).apply {
-                action = Intent.ACTION_MAIN
-                addCategory(Intent.CATEGORY_LAUNCHER)
-            }
             val icon = Intent.ShortcutIconResource.fromContext(this, R.mipmap.ic_launcher);
             val shortcutIntent = Intent("com.android.launcher.action.INSTALL_SHORTCUT").apply {
                 putExtra(Intent.EXTRA_SHORTCUT_INTENT, appIntent)
